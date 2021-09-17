@@ -9,52 +9,47 @@
 //Husam Almanakly and Michael Bentivegna 
 //OS Problem Set 1 - Problem 3
 
-int main(int argc, char *argv[])
-{
+//This program concatenates inputted N text files stated at the command line
+//ie ./a.out [-o output.txt] [file1.txt] ... [fileN.txt]
+//if no output file is specified, stdout is defaulted 
+//if a hyphen is inputted as an infile, stdin is used as the input
+
+int main(int argc, char *argv[]){
     int opt;
     int check = 0;
     int d = 1;
 
     //Loop through command line arguments to see if an output file is provided
-    while ((opt = getopt(argc, argv, "o:")) != -1) 
-    {
-        switch (opt)
-        {
+    while ((opt = getopt(argc, argv, "o:")) != -1) {
+        switch (opt){
             case 'o':
                 //Open output file and check for error 
-                if((d = open(optarg, O_WRONLY|O_CREAT|O_TRUNC, 0666)) < 0)
-                {
+                if((d = open(optarg, O_WRONLY|O_CREAT|O_TRUNC, 0666)) < 0){
                     fprintf(stderr, "Output file %s cannot be opened for writing. Error message: %s.\n", optarg, strerror(errno));
                     return -1;
                 }
-
                 check = 1; 
                 break;
         }
     }    
-
+    
     int fd; 
     int tmp;
     char buf[4096];
 
     //Checks if no infiles were specified
-    if((argc == 1) | (check == 1 & argc == 3))
-    {
+    if((argc == 1) | (check == 1 & argc == 3)){
         argv[argc] = "-";
         argc++;
     }
 
     //Loops through input files
-    while (optind < argc)
-    { 
+    while (optind < argc){ 
         fd = 0;     //0 for stdin
 
-
         //Open requested file name, read info into buf, write to output file
-        if(strcmp(argv[optind],"-") != 0)
-            {
-            if ((fd = open(argv[optind], O_RDONLY, 0666)) < 0)
-            {
+        if(strcmp(argv[optind],"-") != 0){
+            if ((fd = open(argv[optind], O_RDONLY, 0666)) < 0){
                 fprintf(stderr, "Input file %s cannot be opened for reading. Error message: %s\n.", argv[optind], strerror(errno));
                 return -1;
             }   
@@ -66,40 +61,32 @@ int main(int argc, char *argv[])
         int binary = 0; 
         int written = 0; 
 
-
         //Loop read and write procedures encase file is above 4096 bytes
-        while((tmp = read(fd, buf, sizeof(buf))) != 0)
-        {
-
+        while((tmp = read(fd, buf, sizeof(buf))) != 0){
             //Binary check
-            for(int i = 0; i<tmp; i++)
-            {
-                if((buf[i]>=127) | (buf[i]>0 & buf[i]<9) | (buf[i]>13 & buf[i]<32))
-                {
+            for(int i = 0; i<tmp; i++){
+                if((buf[i]>=127) | (buf[i]>0 & buf[i]<9) | (buf[i]>13 & buf[i]<32)){
                     binary = 1; 
                     break;
                 }
             }
 
             //Read error check
-            if (tmp < 0)
-            {
+            if (tmp < 0){
                 fprintf(stderr, "Input file %s cannot be read.  Error message: %s\n", argv[optind], strerror(errno));
                 return -1;
             }
 
-
-            if ((written = write(d, buf, tmp)) < 0)
-            {
+            //Write to output file w/ error check
+            if ((written = write(d, buf, tmp)) < 0){
                 fprintf(stderr, "Output file %s cannot be written to.  Error message: %s\n", argv[optind], strerror(errno));
                 return -1;
             }
 
-            //partial write check 
-            //retry the write starting at buf+number of bytes already correctly written
-            //(Only if not all the read in bytes were writte...)
-            if(written < tmp)
-            {
+            //Partial write check 
+            //Retry the write starting at buf+number of bytes already correctly written
+            //Only if not all the read in bytes were written
+            if(written < tmp){
                 write(d, buf+written, tmp);
             }
             
@@ -107,32 +94,30 @@ int main(int argc, char *argv[])
             total+=tmp; 
         }
 
+        //Change name of - to print nicely 
         if (strcmp(argv[optind],"-") == 0)
             argv[optind] = "<standard input>";
 
-        if(binary == 1)
-        {
+        //Print binaray warning message
+        if(binary == 1){
             fprintf(stderr, "Warning: Inputted file %s is a binary file.\n", argv[optind]);
         }
         
+        //Counts bytes concatenated and system calls (read and write) made
         fprintf(stderr, "%d bytes transferred from '%s', with %d read and write system calls made.\n", total, argv[optind], rwCalls);
-
-
-        if (close(fd) < 0)
-        {
+        
+        //Close input file w/ error check
+        if (close(fd) < 0){
             fprintf(stderr, "Input file %s cannot be closed.  Error message: %s.\n", argv[optind], strerror(errno));
             return -1;
         }
-
             optind++; 
     }
-
-    if(close(d) < 0)
-    {
+    
+    //Close output file w/ error check
+    if(close(d) < 0){
             fprintf(stderr, "Output file %s cannot be closed.  Error message: %s.\n", optarg, strerror(errno));
             return -1;
     }
-
-    //partial writes, binary files check still required
     return 0;
 }
