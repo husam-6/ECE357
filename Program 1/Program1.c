@@ -50,8 +50,8 @@ int main(int argc, char *argv[]){
         //Counter declarations
         int total = 0;
         int rwCalls = 0; 
-        int binary = 0; 
         int written = 0; 
+        int binary; 
         
         //Loop read and write procedures encase file is above 4096 bytes
         while((tmp = read(fd, buf, sizeof(buf))) != 0){
@@ -60,6 +60,7 @@ int main(int argc, char *argv[]){
             //     tmp = read(fd, buf+tmp, sizeof(buf));
             // }
 
+            binary = 0; 
             //Binary check
             for(int i = 0; i<tmp; i++){
                 if((buf[i]>=127) || (buf[i]>0 && buf[i]<9) || (buf[i]>13 && buf[i]<32)){
