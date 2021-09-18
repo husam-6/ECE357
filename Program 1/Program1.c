@@ -6,14 +6,6 @@
 #include <string.h>
 #include <errno.h>
 
-//Husam Almanakly and Michael Bentivegna 
-//OS Problem Set 1 - Problem 3
-
-//This program concatenates inputted N text files stated at the command line
-//ie ./a.out [-o output.txt] [file1.txt] ... [fileN.txt]
-//if no output file is specified, stdout is defaulted 
-//if a hyphen is inputted as an infile, stdin is used as the input
-
 int main(int argc, char *argv[]){
     int opt;
     int check = 0;
@@ -38,7 +30,7 @@ int main(int argc, char *argv[]){
     char buf[4096];
 
     //Checks if no infiles were specified
-    if((argc == 1) | (check == 1 & argc == 3)){
+    if((argc == 1) || (check == 1 && argc == 3)){
         argv[argc] = "-";
         argc++;
     }
@@ -63,9 +55,14 @@ int main(int argc, char *argv[]){
         
         //Loop read and write procedures encase file is above 4096 bytes
         while((tmp = read(fd, buf, sizeof(buf))) != 0){
+            //Partial Read Check, retry read system call
+            // if((tmp != 0) && (tmp != sizeof(buf))){
+            //     tmp = read(fd, buf+tmp, sizeof(buf));
+            // }
+
             //Binary check
             for(int i = 0; i<tmp; i++){
-                if((buf[i]>=127) | (buf[i]>0 & buf[i]<9) | (buf[i]>13 & buf[i]<32)){
+                if((buf[i]>=127) || (buf[i]>0 && buf[i]<9) || (buf[i]>13 && buf[i]<32)){
                     binary = 1; 
                     break;
                 }
