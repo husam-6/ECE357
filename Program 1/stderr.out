@@ -1,0 +1,3 @@
+13 bytes transferred from 'file1.txt', with 2 read and write system calls made.
+17 bytes transferred from '<standard input>', with 4 read and write system calls made.
+Input file - cannot be read.  Error message: Bad file descriptor

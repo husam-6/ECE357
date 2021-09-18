@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
     }    
     
     int fd; 
-    int tmp;
+    int tmp = 0;
     char buf[4096];
 
     //Checks if no infiles were specified
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
         int rwCalls = 0; 
         int binary = 0; 
         int written = 0; 
-
+        
         //Loop read and write procedures encase file is above 4096 bytes
         while((tmp = read(fd, buf, sizeof(buf))) != 0){
             //Binary check
@@ -93,25 +93,28 @@ int main(int argc, char *argv[]){
             rwCalls+=2;
             total+=tmp; 
         }
-
         //Change name of - to print nicely 
         if (strcmp(argv[optind],"-") == 0)
             argv[optind] = "<standard input>";
 
-        //Print binaray warning message
+        //Print binary warning message
         if(binary == 1){
             fprintf(stderr, "Warning: Inputted file %s is a binary file.\n", argv[optind]);
         }
         
-        //Counts bytes concatenated and system calls (read and write) made
+        //Counts bytes transferred and system calls (read and write) made
         fprintf(stderr, "%d bytes transferred from '%s', with %d read and write system calls made.\n", total, argv[optind], rwCalls);
         
         //Close input file w/ error check
-        if (close(fd) < 0){
-            fprintf(stderr, "Input file %s cannot be closed.  Error message: %s.\n", argv[optind], strerror(errno));
-            return -1;
+        if(strcmp(argv[optind], "<standard input>") != 0)
+        {
+            if (close(fd) < 0){
+                fprintf(stderr, "Input file %s cannot be closed.  Error message: %s.\n", argv[optind], strerror(errno));
+                return -1;
+            }
         }
-            optind++; 
+
+        optind++; 
     }
     
     //Close output file w/ error check
