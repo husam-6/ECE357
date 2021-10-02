@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
-#include<stdio.h>
-#include<stdlib.h> 
+#include <stdio.h>
+#include <stdlib.h> 
+#include <unistd.h>
 #include <time.h>
 #include <string.h> 
 #include <sys/types.h>
@@ -11,7 +12,7 @@
 #include <pwd.h>
 #include <grp.h>
 
-char* convert(int mode, char* rVal);
+int convert(int mode, char* rVal);
 
 void printStatement(struct stat d_buf, char* path)
 {
@@ -24,20 +25,56 @@ void printStatement(struct stat d_buf, char* path)
 
     char* time = strtok(ctime(&d_buf.st_mtime), "\n");
 
+    int flag = convert(d_buf.st_mode, modeD);
+    if(flag)
+    {
+        char tmp[1024];
+        ssize_t len;  
+        len = readlink(path, tmp, sizeof(tmp)-1);
+        tmp[len] = '\0';
+        strcat(path, " -> ");
+        strcat(path, tmp);
+    }
 
-    printf("%llu%9lld%11s%5d %s%17s%12lld %s    %s\n", d_buf.st_ino, d_buf.st_blocks, convert(d_buf.st_mode, modeD), d_buf.st_nlink, pwdD->pw_name, grpD->gr_name, d_buf.st_size, time, path);
+    printf("%llu%9lld%11s%5d %s%17s%20lld %s\t%s\n", d_buf.st_ino, d_buf.st_blocks, modeD, d_buf.st_nlink, pwdD->pw_name, grpD->gr_name, d_buf.st_size, time, path);
 
 }
 
-char* convert(int mode, char* rVal)
+int convert(int mode, char* rVal)
 {
+    char* type;
+    int flag = 0; 
+    //Type
+    switch (mode & S_IFMT)
+    {
+    case S_IFDIR:
+        type = "d";
+        break;
+    case S_IFLNK:
+        type = "l";
+        flag = 1;
+        break;
+    case S_IFCHR:
+        type = "c";
+        break;
+    case S_IFBLK:
+        type = "b";
+        break;
+    case S_IFIFO:
+        type = "p";
+        break;
+    case S_IFSOCK:
+        type = "s";
+        break;
+    case S_IFREG:
+        type = "-";
+        break;
+    default:
+        type = "?";
+        break;
+    }
 
-    if((mode & S_IFMT) == S_IFDIR)
-        strcat(rVal, "d");
-    else if ((mode & S_IFMT) == S_IFLNK)
-        strcat(rVal, "l");
-    else  
-        strcat(rVal, "-");
+    strcat(rVal, type);
 
     //Read
     strcat(rVal, mode & S_IRUSR ? "r" : "-");
@@ -54,7 +91,8 @@ char* convert(int mode, char* rVal)
     strcat(rVal, mode & S_IWOTH ? "w" : "-");
     strcat(rVal, mode & S_IXOTH ? "x" : "-");
 
-    return rVal; 
+    // return rVal;
+    return flag;  
 }
 
 int treeWalk(char *directory)
@@ -71,16 +109,8 @@ int treeWalk(char *directory)
         return 0; 
 
     lstat(directory, &d_buf);
-    //Directories
-    // char modeD[10] = "";
 
-    // struct group *grpD;
-    // struct passwd *pwdD;
-    // grpD = getgrgid(d_buf.st_gid);
-    // pwdD = getpwuid(d_buf.st_uid);
-
-    // printf("%llu%9lld%11s%5d %s%17s%12lld %s    %s\n", d_buf.st_ino, d_buf.st_blocks, convert(d_buf.st_mode, modeD), d_buf.st_nlink, pwdD->pw_name, grpD->gr_name, d_buf.st_size, ctime(&d_buf.st_mtime), directory);
-
+    //Print Directories
     printStatement(d_buf, directory);
 
     struct dirent *entry;
@@ -94,33 +124,16 @@ int treeWalk(char *directory)
             strcat(path, "/");
             strcat(path, entry->d_name);
             lstat(path, &e_buf); 
-            
-            // struct group *grp;
-            // struct passwd *pwd;
-
-            // grp = getgrgid(e_buf.st_gid);
-            // pwd = getpwuid(e_buf.st_uid);
-
-            // time_t rawtime = e_buf.st_mtime;
-            // struct tm *textual = localtime(rawtime);
-
-
-            //printf("username: %s\n", pwd->pw_name);
-
-            //int blocks = buf.st_blocks/1000;
-            //printf("%d\t%lld\n", buf.st_blksize, buf.st_blocks);
-            //printf("%s\n",strcat(directory,entry->d_name));
-
+        
             if(entry->d_type == DT_DIR)
             {
-                //printf("%s\n", path);
                 treeWalk(path);
             }
             else
             {
                 char modeE[10] = "";
+                //Print directory entries
                 printStatement(e_buf, path);
-                // printf("%llu%9lld%11s%5d %s%17s%12lld %s    %s\n", e_buf.st_ino, e_buf.st_blocks, convert(e_buf.st_mode, modeE), e_buf.st_nlink, pwd->pw_name, grp->gr_name, e_buf.st_size, ctime(&e_buf.st_mtime), path);
             }
         }
     }
