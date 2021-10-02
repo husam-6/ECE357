@@ -26,6 +26,7 @@ void printStatement(struct stat d_buf, char* path)
     char time[70];
     struct tm *rawTime = localtime(&d_buf.st_mtime);
     strftime(time, sizeof(time), "%b %e %H:%M", rawTime); 
+    //strftime(time, sizeof(time), "%b %e %Y", rawTime); 
 
     // char* time = strtok(ctime(&d_buf.st_mtime), "\n");
 
@@ -157,7 +158,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        treeWalk("./");
+        treeWalk(".");
         //start_dir = opendir("./");
     }
 
