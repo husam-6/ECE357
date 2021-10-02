@@ -23,12 +23,16 @@ void printStatement(struct stat d_buf, char* path)
     grpD = getgrgid(d_buf.st_gid);
     pwdD = getpwuid(d_buf.st_uid);
 
-    char* time = strtok(ctime(&d_buf.st_mtime), "\n");
+    char time[70];
+    struct tm *rawTime = localtime(&d_buf.st_mtime);
+    strftime(time, sizeof(time), "%b %e %H:%M", rawTime); 
+
+    // char* time = strtok(ctime(&d_buf.st_mtime), "\n");
 
     int flag = convert(d_buf.st_mode, modeD);
     if(flag)
     {
-        char tmp[1024];
+        char tmp[70];
         ssize_t len;  
         len = readlink(path, tmp, sizeof(tmp)-1);
         tmp[len] = '\0';
@@ -36,7 +40,7 @@ void printStatement(struct stat d_buf, char* path)
         strcat(path, tmp);
     }
 
-    printf("%llu%9lld%11s%5d %s%17s%20lld %s\t%s\n", d_buf.st_ino, d_buf.st_blocks, modeD, d_buf.st_nlink, pwdD->pw_name, grpD->gr_name, d_buf.st_size, time, path);
+    printf("%llu%9lld%11s%5d %s%17s%20lld %s %s\n", d_buf.st_ino, d_buf.st_blocks, modeD, d_buf.st_nlink, pwdD->pw_name, grpD->gr_name, d_buf.st_size, time, path);
 
 }
 
