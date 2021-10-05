@@ -20,14 +20,13 @@ void printStatement(struct stat d_buf, char* path)
 
     struct group *grpD;
     struct passwd *pwdD;
-    grpD = getgrgid(d_buf.st_gid);
-    pwdD = getpwuid(d_buf.st_uid);
+
 
     char time[70];
     struct tm *rawTime = localtime(&d_buf.st_mtime);
-    strftime(time, sizeof(time), "%b %e %H:%M", rawTime); 
-    //strftime(time, sizeof(time), "%b %e %Y", rawTime); 
-
+    // strftime(time, sizeof(time), "%b %e %H:%M", rawTime); 
+    strftime(time, sizeof(time), "%b %e %Y", rawTime); 
+    
     // char* time = strtok(ctime(&d_buf.st_mtime), "\n");
 
     int flag = convert(d_buf.st_mode, modeD);
@@ -40,8 +39,37 @@ void printStatement(struct stat d_buf, char* path)
         strcat(path, " -> ");
         strcat(path, tmp);
     }
+    ino_t inoNum = d_buf.st_ino;
+    blkcnt_t blocks = d_buf.st_blocks/2; 
+    nlink_t nlink = d_buf.st_nlink; 
+    uid_t uid = d_buf.st_uid;
+    gid_t gid = d_buf.st_gid;
 
-    printf("%llu%9lld%11s%5d %s%17s%20lld %s %s\n", d_buf.st_ino, d_buf.st_blocks, modeD, d_buf.st_nlink, pwdD->pw_name, grpD->gr_name, d_buf.st_size, time, path);
+    // int test = d_buf.st_blksize;
+    //printf("%d\n", test);
+    
+    //char* uid = pwdD->pw_name;
+    //char* gid = grpD->gr_name; 
+    
+    //Need to check if these give null or a string for the name
+    pwdD = getpwuid(uid);
+    grpD = getgrgid(gid);
+
+    off_t size = d_buf.st_size; 
+
+    if((pwdD != NULL) && (grpD != NULL))
+    {
+        char* uid_str = pwdD->pw_name;
+        char* gid_str = grpD->gr_name;
+        printf("%llu%9lld%11s%5d %s%17s%20lld %s %s\n", inoNum, blocks, modeD, nlink, uid_str, gid_str, size, time, path); 
+    }
+    else
+        printf("%llu%9lld%11s%5d %u%17u%20lld %s %s\n", inoNum, blocks, modeD, nlink, uid, gid, size, time, path);
+    //     int uid_num = pwdD->pw_uid;
+    //     int gid_num = grpD->gr_gid;
+    //     printf("%d%9d%11s%5d %d%17d%20d %s %s\n", inoNum, blocks, modeD, nlink, uid_num, gid_num, size, time, path);
+    // }
+    //printf("%llu%9lld%11s%5d %s%17s%20lld %s %s\n", d_buf.st_ino, d_buf.st_blocks, modeD, d_buf.st_nlink, pwdD->pw_name, grpD->gr_name, d_buf.st_size, time, path);
 
 }
 
@@ -84,17 +112,26 @@ int convert(int mode, char* rVal)
     //Read
     strcat(rVal, mode & S_IRUSR ? "r" : "-");
     strcat(rVal, mode & S_IWUSR ? "w" : "-");
-    strcat(rVal, mode & S_IXUSR ? "x" : "-");
+    if (mode & S_ISUID)
+        strcat(rVal, (mode & S_IXUSR) ? "s" : "S");
+    else
+        strcat(rVal, mode & S_IXUSR ? "x" : "-");
     
     //Write
     strcat(rVal, mode & S_IRGRP ? "r" : "-");
     strcat(rVal, mode & S_IWGRP ? "w" : "-");
-    strcat(rVal, mode & S_IXGRP ? "x" : "-");
+    if (mode & S_ISGID)
+        strcat(rVal, (mode & S_IXGRP) ? "s" : "l");
+    else
+        strcat(rVal, mode & S_IXGRP ? "x" : "-");
 
     //Execute
     strcat(rVal, mode & S_IROTH ? "r" : "-");
     strcat(rVal, mode & S_IWOTH ? "w" : "-");
-    strcat(rVal, mode & S_IXOTH ? "x" : "-");
+    if (mode & S_ISVTX)
+        strcat(rVal, (mode & S_IXOTH) ? "t" : "T");
+    else
+        strcat(rVal, mode & S_IXOTH ? "x" : "-");
 
     // return rVal;
     return flag;  
