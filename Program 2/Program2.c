@@ -13,7 +13,7 @@
 #include <grp.h>
 
 int convert(int mode, char* rVal);
-int largestLength = 0;
+int largestLength = 9;
 
 void printStatement(struct stat d_buf, char* path)
 {
@@ -31,12 +31,12 @@ void printStatement(struct stat d_buf, char* path)
     // char* time = strtok(ctime(&d_buf.st_mtime), "\n");
 
     int flag = convert(d_buf.st_mode, modeD);
-    if(flag)
+    if(flag == 1)
     {
         char tmp[70];
         ssize_t len;
         len = readlink(path, tmp, sizeof(tmp)-1);
-        tmp[len] = '\0';
+        tmp[len - 1] = '\0';
         strcat(path, " -> ");
         strcat(path, tmp);
     }
@@ -49,33 +49,52 @@ void printStatement(struct stat d_buf, char* path)
     // int test = d_buf.st_blksize;
     //printf("%d\n", test);
 
-    //char* uid = pwdD->pw_name;
-    //char* gid = grpD->gr_name;
-
-    //Need to check if these give null or a string for the name
     pwdD = getpwuid(uid);
     grpD = getgrgid(gid);
 
     off_t size = d_buf.st_size;
     int tmpLen;
-    if((pwdD != NULL) && (grpD != NULL))
+
+    printf("%6llu", inoNum); 
+    printf("%5lld", blocks); 
+    printf("%11s", modeD); 
+    printf("%4d ", nlink); 
+
+    if(pwdD != NULL)
     {
         char* uid_str = pwdD->pw_name;
-        char* gid_str = grpD->gr_name;
 
         tmpLen = strlen(uid_str);
         if(largestLength < tmpLen)
             largestLength = tmpLen;
-
-        printf("%6llu%5lld%11s%4d %-*s%9s%13lld %s %s\n", inoNum, blocks, modeD, nlink, largestLength, uid_str, gid_str, size, time, path);
+        printf("%-*s", largestLength, uid_str);
     }
     else
-        printf("%6llu%5lld%11s%4d %u%9u%13lld %s %s\n", inoNum, blocks, modeD, nlink, uid, gid, size, time, path);
-    //     int uid_num = pwdD->pw_uid;
-    //     int gid_num = grpD->gr_gid;
-    //     printf("%d%9d%11s%5d %d%17d%20d %s %s\n", inoNum, blocks, modeD, nlink, uid_num, gid_num, size, time, path);
-    // }
-    //printf("%llu%9lld%11s%5d %s%17s%20lld %s %s\n", d_buf.st_ino, d_buf.st_blocks, modeD, d_buf.st_nlink, pwdD->pw_name, grpD->gr_name, d_buf.st_size, time, path);
+        printf("%-*u", largestLength, uid);
+
+    if (grpD != NULL)
+    {
+        char* gid_str = grpD->gr_name;
+
+        tmpLen = strlen(gid_str);
+        if(largestLength < tmpLen)
+            largestLength = tmpLen;
+        printf("%-s", gid_str);
+    }
+    else
+        printf("%u", gid);
+    
+    if(flag == 2)
+    {
+        unsigned int major = major(d_buf.st_rdev); 
+        unsigned int minor = minor(d_buf.st_rdev); 
+        printf("%8u,", major);
+        printf(" %u", minor);
+    }
+    else
+        printf("%13lld", size);
+    printf(" %s  ", time);
+    printf("%s\n", path);
 
 }
 
@@ -95,9 +114,11 @@ int convert(int mode, char* rVal)
         break;
     case S_IFCHR:
         type = "c";
+        flag = 2;  // 2 indicates device (character or block device)
         break;
     case S_IFBLK:
-        type = "b";
+        type = "b";     //ditto 
+        flag = 2; 
         break;
     case S_IFIFO:
         type = "p";
