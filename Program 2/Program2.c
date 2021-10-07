@@ -11,11 +11,16 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <grp.h>
+#include <errno.h>
+
 
 int convert(int mode, char* rVal);
+int printStatement(struct stat d_buf, char* path);
+int treeWalk(char *directory);
+
 int largestLength = 9;
 
-void printStatement(struct stat d_buf, char* path)
+int printStatement(struct stat d_buf, char* path)
 {
     char modeD[15] = "";
 
@@ -35,8 +40,12 @@ void printStatement(struct stat d_buf, char* path)
     {
         char tmp[70];
         ssize_t len;
-        len = readlink(path, tmp, sizeof(tmp)-1);
-        tmp[len - 1] = '\0';
+        if((len = readlink(path, tmp, sizeof(tmp)-1)) == -1)
+        {
+            fprintf(stderr, "Could not read link '%s': %s", path, strerror(errno));
+            return -1; 
+        }
+        tmp[len] = '\0';
         strcat(path, " -> ");
         strcat(path, tmp);
     }
@@ -95,7 +104,7 @@ void printStatement(struct stat d_buf, char* path)
         printf("%13lld", size);
     printf(" %s  ", time);
     printf("%s\n", path);
-
+    return 0; 
 }
 
 int convert(int mode, char* rVal)
@@ -169,20 +178,30 @@ int treeWalk(char *directory)
     DIR* start_dir;
     // char contents[4086];
     char path[1024];
-    start_dir = opendir(directory);
+    if((start_dir = opendir(directory)) == NULL)
+    {
+        fprintf(stderr, "Could not open directory '%s': %s\n" , directory, strerror(errno));
+        return -1;
+    }
+
     struct stat e_buf;
     struct stat d_buf;
 
     if(!start_dir)
         return 0;
 
-    lstat(directory, &d_buf);
+    if(lstat(directory, &d_buf) == -1)
+    {
+        fprintf(stderr, "Could not get file status: %s\n", strerror(errno));
+        return -1;
+    }
 
     //Print Directories
     printStatement(d_buf, directory);
 
     struct dirent *entry;
     //Read each entry 
+    errno = 0; 
     while((entry = readdir(start_dir)) != NULL)
     {
         if ((strcmp(entry->d_name, "..") != 0) && (strcmp(entry->d_name, ".") != 0))
@@ -192,7 +211,11 @@ int treeWalk(char *directory)
             strcpy(path, directory);
             strcat(path, "/");
             strcat(path, entry->d_name);
-            lstat(path, &e_buf);
+            if(lstat(path, &e_buf) == -1)
+            {
+                fprintf(stderr, "Could not get file status: %s\n", strerror(errno));
+                return -1;
+            }   
 
             //Recurse if the given type is a directory 
             if(entry->d_type == DT_DIR)
@@ -207,26 +230,36 @@ int treeWalk(char *directory)
             }
         }
     }
-    closedir(start_dir);
+    if (errno != 0)
+    {
+        fprintf(stderr, "Could not read path '%s': %s\n", path, strerror(errno));
+        return -1;
+    }
+
+    if(closedir(start_dir) == -1)
+    {
+        fprintf(stderr, "Could not close directory stream '%s': %s", path, strerror(errno));
+        return -1;
+    }
 
     return 0;
 }
 
 int main(int argc, char *argv[])
 {
-    if(argc > 1)
+    if(argc == 2)
     {
         int n = strlen(argv[1]);
-        //Remove trailing '/' if present at the end of path 
-        if (argv[1][n - 1] == '/')
-            argv[1][n - 1] = '\0';
         treeWalk(argv[1]);
     }
-    else
+    else if (argc == 1)
     {
         treeWalk(".");
     }
-
+    else 
+    {
+        fprintf(stderr, "Usage: %s <pathname>\n", argv[0]);
+    }
     return 0;
 
 }
