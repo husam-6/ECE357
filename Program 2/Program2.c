@@ -156,7 +156,7 @@ int convert(int mode, char* rVal)
     strcat(rVal, mode & S_IRGRP ? "r" : "-");
     strcat(rVal, mode & S_IWGRP ? "w" : "-");
     if (mode & S_ISGID)
-        strcat(rVal, (mode & S_IXGRP) ? "s" : "l");
+        strcat(rVal, (mode & S_IXGRP) ? "s" : "S");
     else
         strcat(rVal, mode & S_IXGRP ? "x" : "-");
 
@@ -175,6 +175,7 @@ int convert(int mode, char* rVal)
 //Recursive function to walk through filesystem 
 int treeWalk(char *directory)
 {
+
     DIR* start_dir;
     // char contents[4086];
     char path[1024];
