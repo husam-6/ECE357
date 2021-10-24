@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <fcntl.h>
 
 //Function to display arguments and redirection operators
