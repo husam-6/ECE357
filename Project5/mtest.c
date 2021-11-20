@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/uio.h>
+#include <stdlib.h>
 
 
 //For test1
@@ -130,6 +131,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Invalid input type\n");
         return -1; 
     }
+
+    int testNum = atoi(input); 
     
     int fd; 
     // Create a file with the text 'Hello World' already in it (check for errors in addition)
@@ -149,20 +152,20 @@ int main(int argc, char *argv[])
     }
     
     int retVal = 0; 
-    switch (*input)
+    switch (testNum)
     {
-        case '1':
+        case 1:
             retVal = test1(fd, buf);
             break;
-        case '2':
+        case 2:
             printf("Test case 2: Write to a MAP_SHARED region from mmap, see if file contents change\n");
             retVal = test23(fd, buf, MAP_SHARED);
             break;
-        case '3':
+        case 3:
             printf("Test case 3: Write to a MAP_PRIVATE region from mmap, see if file contents change\n");
             retVal = test23(fd, buf, MAP_PRIVATE);
             break;
-        case '4':
+        case 4:
             retVal = test4(fd, buf);
             break;
         default: 
