@@ -28,3 +28,6 @@ to build the executable named "shellgame.exe" and execute with the
 format 
 
 ## ./shellgame.exe <# of pebbles> <# of moves>
+
+The program was built to run on a Mac 64 bit machine - to adjust to 
+different machine slight modifications to the tas.S should be made
