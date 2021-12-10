@@ -33,6 +33,11 @@ void childInfo(int ret)
 
 int main(int argc, char *argv[])
 {
+    if(argc <= 1)
+    {
+        printf("Incorrect Usage: ./shellgame.exe <pebbles> <moves>\n");
+        return 1;
+    }
     int pebbles, moves; 
 
     pebbles = atoi(argv[1]);
