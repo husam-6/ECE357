@@ -1,7 +1,8 @@
 #include "spinlock.h"
 #include "sem.h"
 
-
+//Function to make a number of 'moves' (P and V iterations)
+//For each task with dedicated roles ie Task 1 A->B
 int makeMoves(struct sem *from, struct sem *to, int moves)
 {
     for(int i = 0; i<moves; i++)
@@ -12,6 +13,7 @@ int makeMoves(struct sem *from, struct sem *to, int moves)
     return 0; 
 }
 
+//Function to display the info at the end, after each child terminates
 void displayInfo(struct sem *tmp, int num)
 {
     printf("%d\t\t%d\n", num, tmp->count);
@@ -20,6 +22,8 @@ void displayInfo(struct sem *tmp, int num)
     printf("\n");
 }
 
+//Function to display the info regarding the child, ie pid and 'task' number
+//and number of times handler is invoked
 void childInfo(int ret)
 {
     printf("Child %d (pid %d) done - Signal handler was invoked %d times\n", my_procnum, getpid(), handlerCount);
@@ -41,12 +45,13 @@ int main(int argc, char *argv[])
     struct sem *B = (struct sem*) mmap(NULL, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
     struct sem *C = (struct sem*) mmap(NULL, sizeof(int), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 
-
+    //Initialize each semaphore using sem_init
     sem_init(A, pebbles);
     sem_init(B, pebbles);
     sem_init(C, pebbles);
 
 
+    //Fork 6 processes to simulate different threads
     int n = 6; 
     pid_t childPids[n];
 
@@ -102,6 +107,7 @@ int main(int argc, char *argv[])
     int status;
     pid_t pid;
 
+    //Wait for each task to terminate
     int tmp = n; 
     while (tmp > 0) 
     {
@@ -109,6 +115,7 @@ int main(int argc, char *argv[])
         --tmp;
     }
     
+    //Print final info
     printf("Sem#\t\tval\t\tSleeps\t\tWakes\n");
     displayInfo(A, 0);
     displayInfo(B, 1);

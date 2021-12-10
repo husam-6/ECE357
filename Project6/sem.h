@@ -18,6 +18,7 @@ int handlerCount;
 struct node
 {
     int pid; 
+    int procnum; 
     struct node *next; 
 };
 
@@ -49,7 +50,7 @@ struct sem
 void insert(struct node *n, struct sem *s);
 
 //remove from the linked list
-int pop(struct sem *s);
+struct node* pop(struct sem *s);
 
 //Function to declare the sempahore with the specified value
 void sem_init(struct sem *s, int count);

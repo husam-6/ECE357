@@ -40,7 +40,7 @@ void sem_wait(struct sem *s)
         sigaddset(&set,SIGUSR1); 
         sigprocmask(SIG_BLOCK, &set, NULL);
         
-        
+        s->items[my_procnum].procnum = my_procnum;
         insert(&(s->items[my_procnum]), s);
         spin_unlock(&(s->lock));
         
@@ -70,9 +70,9 @@ void sem_inc(struct sem *s)
     {
         for(int i=0; i<s->length; i++)
         {
-            int pid = pop(s);
-            kill(pid, SIGUSR1);
-            // s->woke[my_procnum]++;
+            struct node *tmp = pop(s);
+            kill(tmp->pid, SIGUSR1);
+            s->woke[tmp->procnum]++;
 
         }
     }
@@ -100,11 +100,11 @@ void insert(struct node *n, struct sem *s)
 //remove from the linked list
 // -1 -> empty linked list 
 // otherwise returns the removed element
-int pop(struct sem *s)
+struct node* pop(struct sem *s)
 {
     if(s->length == 0)
     {
-        return -1; 
+        return NULL; 
     }
     
     struct node* tmp; 
@@ -112,7 +112,7 @@ int pop(struct sem *s)
     s->start = s->start->next;
     s->length--; 
 
-    return tmp->pid; 
+    return tmp; 
 }
 
 
