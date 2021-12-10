@@ -2,26 +2,30 @@
 #include "sem.h"
 
 
-void makeMoves(struct sem *from, struct sem *to, int moves)
+int makeMoves(struct sem *from, struct sem *to, int moves)
 {
     for(int i = 0; i<moves; i++)
     {
         sem_wait(from);
-        // printf("GETS PAST WAIT\n");
         sem_inc(to);
     }
+    return 0; 
 }
 
-
-void displayInfo(struct sem *tmp)
+void displayInfo(struct sem *tmp, int num)
 {
+    printf("%d\t\t%d\n", num, tmp->count);
     for(int i = 0; i<6; i++)
-    {
-        printf("Process %d went to sleep: %d times\n", i, tmp->sleep[i]);
-        printf("Process %d woke up: %d times\n", i, tmp->woke[i]);
-    }
-    printf("\n\n\n");
+        printf("VCPU: %d\t\t\t\t%d\t\t%d\n", i, tmp->sleep[i], tmp->woke[i]);
+    printf("\n");
 }
+
+void childInfo(int ret)
+{
+    printf("Child %d (pid %d) done - Signal handler was invoked %d times\n", my_procnum, getpid(), handlerCount);
+    printf("VCPU: %d done\n", my_procnum);
+    printf("Child pid %d exited with -> %d\n", getpid(), ret);
+} 
 
 int main(int argc, char *argv[])
 {
@@ -56,32 +60,34 @@ int main(int argc, char *argv[])
                 break;
 
             case 0:
+                printf("VCPU %d starting, pid %d\n", i, getpid());
                 my_procnum = i; 
+                int ret; 
                 switch (i)
                 {
                     case 0: 
-                        makeMoves(A, B, moves);
-                        printf("Finish: %d\n", my_procnum);
+                        ret = makeMoves(A, B, moves);
+                        childInfo(ret);
                         break;
                     case 1: 
-                        makeMoves(A, C, moves);
-                        printf("Finish: %d\n", my_procnum);
+                        ret = makeMoves(A, C, moves);
+                        childInfo(ret);
                         break;
                     case 2:
-                        makeMoves(B, A, moves);
-                        printf("Finish: %d\n", my_procnum);
+                        ret = makeMoves(B, A, moves);
+                        childInfo(ret);
                         break;
                     case 3: 
-                        makeMoves(B, C, moves);
-                        printf("Finish: %d\n", my_procnum);
+                        ret = makeMoves(B, C, moves);
+                        childInfo(ret);
                         break;
                     case 4: 
-                        makeMoves(C, A, moves);
-                        printf("Finish: %d\n", my_procnum);
+                        ret = makeMoves(C, A, moves);
+                        childInfo(ret);
                         break;
                     case 5:
-                        makeMoves(C, B, moves);
-                        printf("Finish: %d\n", my_procnum);
+                        ret = makeMoves(C, B, moves);
+                        childInfo(ret);
                         break;
                 }
                 return 0; 
@@ -90,6 +96,8 @@ int main(int argc, char *argv[])
                 break; 
         } 
     }
+
+    printf("Main process waiting for spawned children...\n");
 
     int status;
     pid_t pid;
@@ -100,9 +108,10 @@ int main(int argc, char *argv[])
         pid = wait(&status);
         --tmp;
     }
-
-    displayInfo(A);
-    displayInfo(B);
-    displayInfo(C);
+    
+    printf("Sem#\t\tval\t\tSleeps\t\tWakes\n");
+    displayInfo(A, 0);
+    displayInfo(B, 1);
+    displayInfo(C, 2);
 
 }

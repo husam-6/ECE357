@@ -13,6 +13,7 @@
 
 
 int my_procnum; 
+int handlerCount;
 
 struct node
 {
