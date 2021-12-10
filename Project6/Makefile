@@ -1,8 +1,11 @@
-dumbBitch.exe: testInt.o spinlock.o tas64.o
-	gcc -o dumbBitch.exe testInt.o spinlock.o tas64.o
+shellgame.exe: main.o sem.o spinlock.o tas64.o
+	gcc -o shellgame.exe main.o sem.o spinlock.o tas64.o
 
-testInt.o: testInt.c
-	gcc -c testInt.c
+main.o: main.c
+	gcc -c main.c
+
+sem.o: sem.c sem.h
+	gcc -c sem.c
 
 spinlock.o: spinlock.c spinlock.h
 	gcc -c spinlock.c

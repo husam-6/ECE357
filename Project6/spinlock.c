@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <sched.h>
-
 #include "spinlock.h"
 
 int spin_lock(volatile char *lock)
