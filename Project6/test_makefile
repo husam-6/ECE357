@@ -1,5 +1,5 @@
-dumbBitch.exe: testInt.o spinlock.o tas64.o
-	gcc -o dumbBitch.exe testInt.o spinlock.o tas64.o
+test.exe: testInt.o spinlock.o tas64.o
+	gcc -o test.exe testInt.o spinlock.o tas64.o
 
 testInt.o: testInt.c
 	gcc -c testInt.c
