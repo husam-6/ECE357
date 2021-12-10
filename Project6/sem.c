@@ -63,6 +63,8 @@ void sem_inc(struct sem *s)
     spin_lock(&(s->lock));
     
     s->count++; 
+    
+    // printf("COUNT: %d\n", s->count);
 
     if(s->length > 0 && s->count>0)
     {
@@ -70,6 +72,7 @@ void sem_inc(struct sem *s)
         {
             int pid = pop(s);
             kill(pid, SIGUSR1);
+            // s->woke[my_procnum]++;
 
         }
     }
