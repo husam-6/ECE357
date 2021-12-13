@@ -14,8 +14,10 @@ loop:
 
 	movl $0, %esi
 
-	cmpl %esi, %eax
-	jle ex
+	cmpl $0, %eax
+	je ex	
+	jl exError					#Exit if an error occured while reading
+	
 
 	movl    %eax,%edx           # length of previous read
 	movl    $buf,%ecx           # buffer which contains the string
@@ -24,14 +26,20 @@ loop:
 	int     $0x80 				# make system call
 	
 	jmp loop              			
+
 ex:
 
 	movl    $0,%ebx             # Exit code 0
 	movl    $1,%eax             # System call exit - 1
 	int     $0x80               # make system call
 
+exError:
+	mov $-1,%ebx				# Exit code -1
+	movl $1,%eax
+	int $0x80
+
 .data                          
 
 #Temporary buffer for read and write 
 buf:
-	.ascii    "\n"   # our dear string
+	.ascii    "\n"   
